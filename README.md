@@ -10,4 +10,4 @@ This repo contains all **Structure-Based Virtual Screening** source codes and de
 * [Docking](./Docking/README.md)
 * [NonDocking](./NonDocking/README.md)
 
-<center><img src="images/intro.png" width="700" align="middle"/></center>
+<center><img src="images/Intro.png" width="700" align="middle"/></center>
