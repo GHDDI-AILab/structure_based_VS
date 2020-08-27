@@ -322,25 +322,3 @@ def start_data_loader(batch_data_loader,
         sync_manager_proc.start()
         workers.append(sync_manager_proc)
     return workers
-
-
-# TESTING CODE
-if __name__ == '__main__':
-    pass
-    # Xs, adj_matrix_is, Y = gpickle.load('prep_task/processed_data/1a1e_cm4_nm6_X_adji.gpkl')
-
-    # data_container = queue.Queue
-    # queue_size = 3
-    # worker = 1
-    # data_queue = data_container(queue_size * worker)
-    # t0 = time.time()
-    # batch_data_loader = partial(batch_data_loader_type)
-    # workers = start_data_loader(batch_data_loader, data_queue, (Xs, Y, adj_matrix_is),
-    #                             batch_size=256, batch_size_min=256,
-    #                             max_epoch_num=1, worker_num=1,
-    #                             use_multiprocessing=False, name='codetest',
-    #                             shuffle=False)
-    # print(len(data_queue.get()))
-    # t1 = time.time()
-    # print('done\n')
-    # print('dt: %.2f' %(t1-t0))
