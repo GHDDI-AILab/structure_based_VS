@@ -1,0 +1,61 @@
+SEED: 7
+OPTIMIZER: 'Adam'
+OPTIMIZER_CONFIG:
+  # lr: 0.01
+  # momentum: 0.1
+  weight_decay: 0.0001
+
+LOSS_FUNCTION: 'CrossEntropyLoss'
+
+METRIC: 'metrics_1'
+
+MODEL_VER:
+  model_ver: 'model_ndgg_1'
+  batch_loader: 'load_batch_data_ndgg_1'
+  load_data_prep: 'load_data_ndgg_1'
+  ligand: 'model_4v3'
+  protein: 'model_4v3'
+  cls: 'cls_1'
+  output_dim: 2
+  anneal_dropouts: [[0.1, 0], [0.1, 0.5]]
+
+MODEL_CONFIG:
+  atom_embedding_dim: 75
+
+  config_ligand:
+    output_dim: 100
+    block_num: 5
+    hidden_dim: 256
+    aggregation_methods: ['sum', 'rnn-max']
+    affine_before_merge: False
+    multiple_aggregation_merge: 'cat'
+    readout_method: 'rnn-sum-max'
+    eps: 1.0
+    add_dense_connection: True
+    use_neighbor_op: False
+    
+  config_protein:
+    output_dim: 100
+    block_num: 5
+    hidden_dim: 256
+    aggregation_methods: ['sum', 'rnn-max']
+    affine_before_merge: False
+    multiple_aggregation_merge: 'cat'
+    readout_method: 'rnn-sum-max'
+    eps: 1.0
+    add_dense_connection: True
+    use_neighbor_op: False
+
+  config_cls:
+    h_sizes: [100, 75, 40]
+    output_dim: 2
+    act_layers: ['gelu', 'gelu', 'gelu']
+    norm_layers: ['bn', 'bn', 'bn']
+    dropouts: [0.5, 0.5, 0.5]
+
+TRAINING:
+  batch_size: 256
+  batch_size_min: 256
+  batch_size_test: 256
+  max_epoch_num: 100
+  val_per_epoch_num: 1

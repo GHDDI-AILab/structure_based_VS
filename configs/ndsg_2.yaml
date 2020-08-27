@@ -1,0 +1,60 @@
+SEED: 7
+OPTIMIZER: 'Adam'
+OPTIMIZER_CONFIG:
+  # lr: 0.01
+  # momentum: 0.1
+  weight_decay: 0.0001
+
+LOSS_FUNCTION: 'CrossEntropyLoss'
+
+METRIC: 'metrics_1'
+
+MODEL_VER:
+  model_ver: 'model_ndsg_2'
+  batch_loader: 'load_batch_data_ndsg_1'
+  load_data_prep: 'load_data_ndsg_1'
+  ligand: 'model_4v4'
+  protein: 'model_seq_1'
+  cls: 'cls_1'
+  output_dim: 2
+  anneal_dropouts: [[0.1, 0], [0.1, 0.5]]
+
+MODEL_CONFIG:
+  atom_embedding_dim: 75
+
+  config_ligand:
+    block_num: 5
+    # input_dim: 75
+    hidden_dim: 256
+    output_dim: 100
+    degree_wise: False
+    max_degree: 26
+    aggregation_methods: ['max', 'mean']
+    multiple_aggregation_merge_method: 'sum'
+    multiple_readout_merge_method: 'sum'
+    affine_before_merge: False
+    node_feature_update_method: 'rnn'
+    readout_methods: ['rnn-max-sum']
+    add_dense_connection: True  # whether add dense connection among the blocks
+    pyramid_feature: True
+    slim: True
+    pretrain: None
+    
+  config_protein:
+    seq_max_len: 155
+    bert_config: '/home/jwu/projects/SBVS_dev/models/bert_model/bert_config.json'
+    pretrain: '/home/jwu/projects/SBVS_dev/models/bert_model/pretrain_ver1.pth'
+
+  config_cls:
+    h_sizes: [100, 75, 40]
+    output_dim: 2
+    act_layers: ['gelu', 'gelu', 'gelu']
+    norm_layers: ['bn', 'bn', 'bn']
+    dropouts: [0.5, 0.5, 0.5]
+
+TRAINING:
+  batch_size: 256
+  batch_size_min: 256
+  batch_size_test: 256
+  max_epoch_num: 100
+  val_per_epoch_num: 1

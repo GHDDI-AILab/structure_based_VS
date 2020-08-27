@@ -1,0 +1,16 @@
+.idea
+.pytest_cache
+__pycache__
+*.csv
+*.pyc
+*.svg
+*.pkl
+*.gpkl
+*.pptx
+*.ppt
+*.vsd
+*.vsdx
+.DS_Store
+model/
+data/
+
