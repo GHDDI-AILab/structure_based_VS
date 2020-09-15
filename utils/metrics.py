@@ -1,12 +1,21 @@
 import numpy as np
-from sklearn.metrics import roc_auc_score
+import scipy.stats
+from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
 from scipy.special import softmax
 
-def metrics_1(scorematrix, groundtruths):
+def metrics_1(scorematrix, groundtruths, sample_weight=None):
     # input: numpy array
-    # AUC, ef, accuracy
-    auc = roc_auc_score(groundtruths, softmax(scorematrix, axis=1)[:, 1])
+    # AUC, AuPRef, accuracy
+    AUROC = roc_auc_score(groundtruths, softmax(scorematrix, axis=1)[:, 1])
     
+    sample_num, class_num = scorematrix.shape
+    auprs = []
+    for i in range(class_num):
+        p, r, th = precision_recall_curve(groundtruths, scorematrix[:,i], pos_label=i, sample_weight=sample_weight)
+        aupr = auc(r, p)
+        auprs.append(aupr)
+    aupr_hmean = scipy.stats.hmean(auprs)
+
     scores = scorematrix[:, 1]
     # k denotes percentage
     gt_scores = [(groundtruths[ii], scores[ii]) for ii in range(len(groundtruths))]
@@ -25,7 +34,8 @@ def metrics_1(scorematrix, groundtruths):
     acc = (pred == groundtruths).sum() / len(groundtruths)
 
     metric_value_dict = {
-        'AUC': auc,
+        'AUROC': AUROC,
+        'AUPR': aupr_hmean,
         'ACC': acc,
         'EF@1%':  ef1,
         'EF@2%':  ef2,

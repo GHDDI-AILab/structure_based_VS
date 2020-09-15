@@ -11,6 +11,6 @@ __pycache__
 *.vsd
 *.vsdx
 .DS_Store
-model/
 data/
-
+logs/
+results/

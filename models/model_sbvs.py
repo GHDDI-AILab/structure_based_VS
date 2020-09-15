@@ -11,27 +11,29 @@ class model_ndgg_1(nn.Module):
     NonDockingGG ver2: 4v3 + 4v3 + cat_MLP
     """
     def __init__(self,
-                 cfg,
+                 CFG,
                  num_embedding,
                  ):
         super(model_ndgg_1, self).__init__()
-        model_ligand  = getattr(model_graph, cfg['MODEL_VER']['ligand'])
-        model_protein = getattr(model_graph, cfg['MODEL_VER']['protein'])
-        model_cls     = getattr(model_classifier, cfg['MODEL_VER']['cls'])
+        model_ligand  = getattr(model_graph, CFG.MODEL_VER.ligand)
+        model_protein = getattr(model_graph, CFG.MODEL_VER.protein)
+        model_cls     = getattr(model_classifier, CFG.MODEL_VER.cls)
 
         self.emb0 = nn.Embedding(num_embeddings=num_embedding,
-                                 embedding_dim=cfg['MODEL_CONFIG']['atom_embedding_dim'])
+                                 embedding_dim=CFG.MODEL_CONFIG.atom_embedding_dim)
         self.model_ligand  = model_ligand(num_embedding=-1,
-                                      **cfg['MODEL_CONFIG']['config_ligand'])
+                                          input_dim=CFG.MODEL_CONFIG.atom_embedding_dim,
+                                      **CFG.MODEL_CONFIG.config_ligand.__dict__)
         self.model_protein = model_protein(num_embedding=-1,
-                                      **cfg['MODEL_CONFIG']['config_protein'])
+                                          input_dim=CFG.MODEL_CONFIG.atom_embedding_dim,
+                                      **CFG.MODEL_CONFIG.config_protein.__dict__)
         
         #classifier
-        out_dim_ligand  = cfg['MODEL_CONFIG']['config_ligand']['output_dim']
-        out_dim_protein = cfg['MODEL_CONFIG']['config_protein']['output_dim']
+        out_dim_ligand  = CFG.MODEL_CONFIG.config_ligand.output_dim
+        out_dim_protein = CFG.MODEL_CONFIG.config_protein.output_dim
         input_dim_cls = out_dim_ligand + out_dim_protein
         self.classifier = model_cls(input_dim = input_dim_cls,
-                        **cfg['MODEL_CONFIG']['config_cls'])
+                        **CFG.MODEL_CONFIG.config_cls.__dict__)
     
     def forward(self, data, dropout=0.0, aux=None):
         data_ligand, data_protein = data
@@ -40,7 +42,6 @@ class model_ndgg_1(nn.Module):
         # sharing embedding layer
         X_ligand = self.emb0(X_ligand)
         X_protein = self.emb0(X_protein)
-
         # get ligand and graph representation
         output_ligand = self.model_ligand(X_ligand,
                             edges=edges_ligand,
@@ -53,7 +54,7 @@ class model_ndgg_1(nn.Module):
         
         # classifier
         x = torch.cat([output_ligand, output_protein], dim=-1)
-        x = self.classifier(x)
+        x = self.classifier(x, dropout=dropout)
         
         return x
 
@@ -62,27 +63,28 @@ class model_ndgg_2(nn.Module):
     NonDockingGG ver2: 4v4 + 4v4 + cat_MLP
     """
     def __init__(self,
-                 cfg,
+                 CFG,
                  num_embedding,
                  ):
         super(model_ndgg_2, self).__init__()
-        model_ligand  = getattr(model_graph, cfg['MODEL_VER']['ligand'])
-        model_protein = getattr(model_graph, cfg['MODEL_VER']['protein'])
-        model_cls     = getattr(model_classifier, cfg['MODEL_VER']['cls'])
+        model_ligand  = getattr(model_graph, CFG.MODEL_VER.ligand)
+        model_protein = getattr(model_graph, CFG.MODEL_VER.protein)
+        model_cls     = getattr(model_classifier, CFG.MODEL_VER.cls)
 
         self.emb0 = nn.Embedding(num_embeddings=num_embedding,
-                                 embedding_dim=cfg['MODEL_CONFIG']['atom_embedding_dim'])
+                                 embedding_dim=CFG.MODEL_CONFIG.atom_embedding_dim)
         self.model_ligand  = model_ligand(num_embedding=-1,
-                                      **cfg['MODEL_CONFIG']['config_ligand'])
+                                      **CFG.MODEL_CONFIG.config_ligand.__dict__)
         self.model_protein = model_protein(num_embedding=-1,
-                                      **cfg['MODEL_CONFIG']['config_protein'])
+                                      **CFG.MODEL_CONFIG.config_protein.__dict__)
         
         #classifier
-        out_dim_ligand  = cfg['MODEL_CONFIG']['config_ligand']['output_dim']
-        out_dim_protein = cfg['MODEL_CONFIG']['config_protein']['output_dim']
-        input_dim_cls = out_dim_ligand + out_dim_protein
+        input_dim_cls = CFG.MODEL_CONFIG.atom_embedding_dim * (
+            (CFG.MODEL_CONFIG.config_ligand.block_num+1) + 
+            (CFG.MODEL_CONFIG.config_protein.block_num+1)
+        )
         self.classifier = model_cls(input_dim = input_dim_cls,
-                        **cfg['MODEL_CONFIG']['config_cls'])
+                        **CFG.MODEL_CONFIG.config_cls.__dict__)
     
     def forward(self, data, dropout=0.0, degree_slices=None, aux=None):
         data_ligand, data_protein = data
@@ -125,34 +127,34 @@ class model_ndsg_2(nn.Module):
     NonDockingGG ver2: BERT(embed only) + 4v4 + cat_MLP
     """
     def __init__(self,
-                 cfg,
+                 CFG,
                  num_embedding,
                  ):
         super(model_ndsg_2, self).__init__()
-        model_ligand  = getattr(model_graph, cfg['MODEL_VER']['ligand'])
-        model_protein = getattr(model_sequence, cfg['MODEL_VER']['protein'])
-        model_cls     = getattr(model_classifier, cfg['MODEL_VER']['cls'])
+        model_ligand  = getattr(model_graph, CFG.MODEL_VER.ligand)
+        model_protein = getattr(model_sequence, CFG.MODEL_VER.protein)
+        model_cls     = getattr(model_classifier, CFG.MODEL_VER.cls)
 
         # self.emb0 = nn.Embedding(num_embeddings=num_embedding,
-        #                          embedding_dim=cfg['MODEL_CONFIG']['atom_embedding_dim'])
+        #                          embedding_dim=CFG['MODEL_CONFIG']['atom_embedding_dim'])
         self.model_ligand  = model_ligand(num_embedding=num_embedding,
-                                      **cfg['MODEL_CONFIG']['config_ligand'])
-        bert_config = model_sequence.BertConfig(cfg['MODEL_CONFIG']['config_protein']['bert_config'])
+                                      **CFG.MODEL_CONFIG.config_ligand.__dict__)
+        bert_config = model_sequence.BertConfig(CFG.MODEL_CONFIG.config_protein.bert_config)
         self.model_protein = model_protein(bert_config)
         # sequence-pretrain
-        if cfg['MODEL_CONFIG']['config_protein']['pretrain'] is not None:
-            pretrained_file = cfg['MODEL_CONFIG']['config_protein']['pretrain']
+        if CFG.MODEL_CONFIG.config_protein.pretrain is not None:
+            pretrained_file = CFG.MODEL_CONFIG.config_protein.pretrain
             state_dict = torch.load(pretrained_file, map_location=torch.device('cpu'))
             # rename simple because trained in different module name
             state_dict = rename_state_dict_keys(state_dict)
             self.model_protein.load_state_dict(state_dict)
 
         # classifier
-        out_dim_ligand  = cfg['MODEL_CONFIG']['config_ligand']['output_dim']
+        out_dim_ligand  = CFG.MODEL_CONFIG.config_ligand.output_dim
         out_dim_protein = bert_config.hidden_size
         input_dim_cls = out_dim_ligand + out_dim_protein
         self.classifier = model_cls(input_dim = input_dim_cls,
-                        **cfg['MODEL_CONFIG']['config_cls'])
+                        **CFG.MODEL_CONFIG.config_cls.__dict__)
     
     def forward(self, data, dropout=0.0, degree_slices=None, aux=None):
         data_ligand, data_protein = data

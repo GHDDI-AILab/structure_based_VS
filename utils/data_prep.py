@@ -35,7 +35,7 @@ def load_aadict(aa_dict_file):
 def load_data_0(args):
     return
 
-def load_data_ndgg_1(args, cfg=None):
+def load_data_ndgg_1(args, CFG=None):
     atom_dict = load_atom_dict(args.atom_dict_file)
 
     ligands = pd.read_csv(args.train_ligands)
@@ -54,7 +54,7 @@ def load_data_ndgg_1(args, cfg=None):
     # data = (unique_id for loo, smiles, proteins_graphs, label)
     return atom_dict, (protein, smiles, protein_graphs, label)
 
-def load_data_ndsg_1(args, cfg):
+def load_data_ndsg_1(args, CFG):
     aa_dict = load_aadict(args.aa_dict_file)
     atom_dict = load_atom_dict(args.atom_dict_file)
 
@@ -69,9 +69,9 @@ def load_data_ndsg_1(args, cfg):
     proteins_seq = {}
     for k, v in proteins_seq_dict.items():
         p_seq = np.array([2] + [aa_dict[s] for s in v] + [3])
-        proteins_seq[k] = np.concatenate([p_seq, [aa_dict['<PAD>']] * (cfg['MODEL_CONFIG']['config_protein']['seq_max_len']- len(p_seq))])
+        proteins_seq[k] = np.concatenate([p_seq, [aa_dict['<PAD>']] * (CFG.MODEL_CONFIG.config_protein.seq_max_len - len(p_seq))])
 
     protein_seqs = np.array([proteins_seq[p] for p in protein])
-    cfg['aa_dict_len'] = len(aa_dict)
+    CFG.aa_dict_len = len(aa_dict)
     # data = (unique_id for loo, smiles, proteins_seqs, label)
     return atom_dict, (protein, smiles, protein_seqs, label)

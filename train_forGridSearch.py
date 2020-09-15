@@ -19,7 +19,6 @@ import torch
 from torch import optim
 from torch import nn
 
-# import pdb
 def get_parser():
     """
     Parameters Parser
@@ -27,14 +26,14 @@ def get_parser():
     argparser = argparse.ArgumentParser(description="SBVS")
 
     # task selection
-    argparser.add_argument('-config_file', default='ndgg_1_grid', type=str)
+    argparser.add_argument('-config_file', default='ndgg_1', type=str)
 
     # model
     argparser.add_argument('-device', default=-1, type=int, help='device, -1=CPU, >=0=GPU')
 
     # train/val
     argparser.add_argument('-save_folder', default='ndgg_1')
-    argparser.add_argument('-save_epoch', default=1, type=int)
+    argparser.add_argument('-save_epoch', default=-1, type=int)
     
     # multi-worker
     argparser.add_argument('-train_loader_worker', default=1, type=int)
@@ -50,8 +49,8 @@ def get_parser():
     argparser.add_argument('-train_ext_ligands', default='./data/ligands_dude98pos_truev2all.csv', type=str)
         # NonDockingGG and NonDockingSG
     argparser.add_argument('-train_protein_dict', default='./data/protein_dude98pos_truev2all.mp', type=str)
-    argparser.add_argument('-train_ligands', default='./data/ligands_dude98pos_truev2all.csv', type=str)
-    # argparser.add_argument('-train_ligands', default='./data/miniset_seed7.csv', type=str)
+    # argparser.add_argument('-train_ligands', default='./data/ligands_dude98pos_truev2all.csv', type=str)
+    argparser.add_argument('-train_ligands', default='./data/miniset_seed7.csv', type=str)
     #     # NonDockingSG
     argparser.add_argument('-train_protein_seq_dict', default='./data/chain_list_pad.mp', type=str)
     # argparser.add_argument('-train_ligands', default='./data/ligands_dude98pos_truev2all.csv', type=str)
@@ -59,10 +58,11 @@ def get_parser():
     # misc
     argparser.add_argument('-loo', default=False, type=bool)
     argparser.add_argument('-kfold', default=5, type=int)
-    argparser.add_argument('-logger', default=True, type=bool)
-    argparser.add_argument('-logger_filename', default='ndgg_1_grid', type=str)
-    argparser.add_argument('-logger_folder', default='NDGG', type=str)
+    argparser.add_argument('-logger', default=False, type=bool)
+    argparser.add_argument('-logger_filename', default='trial1', type=str)
+    argparser.add_argument('-logger_folder', default='NDGG_GridSearch', type=str)
     argparser.add_argument('-remark', default='', type=str)
+    argparser.add_argument('-grid_search', default=100, type=int)
 
     return argparser
 
@@ -72,13 +72,31 @@ def init_random(CFG):
     torch.cuda.manual_seed(CFG.SEED)
     return
 
-def main(args):
+def objective(trial, args):
     # =================================== configs ===================================
     logger = init_logger(args)
 
     config_file = './configs/%s.yaml' %args.config_file
     CFG = setup_cfg(config_file, logger)
     
+    # ----------------------------------- Grid Search -----------------------------------
+    CFG.MODEL_CONFIG.atom_embedding_dim = trial.suggest_categorical('atom_embedding_dim', [25, 50, 75, 100])
+    CFG.MODEL_CONFIG.config_ligand.output_dim = trial.suggest_int('cfg_lig_output_dim', 50, 150)
+    CFG.MODEL_CONFIG.config_ligand.block_num = trial.suggest_int('cfg_lig_block_num', 3, 7)
+    CFG.MODEL_CONFIG.config_ligand.hidden_dim = trial.suggest_categorical('cfg_lig_hidden_num', [128, 256, 512])
+    
+    CFG.MODEL_CONFIG.config_protein.output_dim = trial.suggest_int('cfg_prt_output_dim', 50, 150)
+    CFG.MODEL_CONFIG.config_protein.block_num = trial.suggest_int('cfg_prt_block_num', 1, 5)
+    CFG.MODEL_CONFIG.config_protein.hidden_dim = trial.suggest_categorical('cfg_prt_hidden_num', [64, 128, 256])
+
+    CFG.OPTIMIZER = trial.suggest_categorical('optimizer', ['SGD', 'Adam'])
+    CFG.OPTIMIZER_CONFIG.lr = trial.suggest_loguniform('lr', 1e-3, 1e-1)
+    if CFG.OPTIMIZER == 'SGD':
+        CFG.OPTIMIZER_CONFIG.momentum = 0.1
+    CFG.OPTIMIZER_CONFIG.weight_decay = trial.suggest_uniform('weight_decay', 0, 1e-4)
+    
+    # -----------------------------------------------------------------------------------
+
     init_random(CFG)
 
     # Params
@@ -224,23 +242,47 @@ def main(args):
             metric_print = ' | '.join(['%s: %.3f' %(x, metric_values[x]) for x in metric_values])
             logger.info('epoch: %2d | loss: %.3f | %s'
                         % (epoch, acc_epoch_loss, metric_print))
-            
-            # save by auc for now
-            if 'AUC' in metric_values and args.save_epoch > 0:
-                auc_epoch = metric_values['AUC']
-                if auc_epoch > best_crit_val:
-                    save_path = './results/%s/fold_%d_epoch_%d.pth' %(args.save_folder, k, epoch)
-                    if not os.path.exists('./results/%s' %(args.save_folder)):
-                        os.makedirs('./results/%s' %(args.save_folder))
-                    torch.save(model_agent.model.state_dict(), save_path)
+            auc_aupr_hmean = 2 * metric_values['AUROC'] * metric_values['AUPR'] / (metric_values['AUROC'] + metric_values['AUPR'])
+            best_crit_val = max(best_crit_val, auc_aupr_hmean)
+            # # save by auc for now
+            # if 'AUC' in metric_values and args.save_epoch > 0:
+            #     auc_epoch = metric_values['AUC']
+            #     if auc_epoch > best_crit_val:
+            #         save_path = './results/%s/fold_%d_epoch_%d.pth' %(args.save_folder, k, epoch)
+            #         if not os.path.exists('./results/%s' %(args.save_folder)):
+            #             os.makedirs('./results/%s' %(args.save_folder))
+            #         torch.save(model_agent.model.state_dict(), save_path)
 
-                    best_crit_val = auc_epoch
+            #         best_crit_val = auc_epoch
         k += 1
-    return
-
+        break
+    return best_crit_val
 
 if __name__ == '__main__':
     argparser = get_parser()
     args = argparser.parse_args()
 
-    main(args)
+    if args.grid_search:
+        import optuna
+        from functools import partial
+        import json
+        from dandelion.util import gpickle
+
+        rdb = 'results/grid_search/grid_search_ndgg1.db'
+        trial_objective_func = partial(objective, args=args)
+        study = optuna.create_study(direction='maximize', storage='sqlite:///' + rdb, load_if_exists=True, study_name='grid_search')
+        print('Start grid searching for hyperparameter tuning ...')
+        time0 = time.time()
+        study.optimize(trial_objective_func, n_trials=args.grid_search)
+        time1 = time.time()
+        print('Number of finished trials = %d, time cost = %0.2fmins' % (len(study.trials), (time1-time0)/60))
+        print('Best trial got:')
+        trial = study.best_trial
+        print('  Value: ', trial.value)
+        print('  Params: ')
+        for key, value in trial.params.items():
+            print('    {}: {}'.format(key, value))
+        with open('results/grid_search/best_trial_ndgg1.json', encoding='utf8', mode='wt') as f:
+            json.dump(trial.params, f, ensure_ascii=False, indent=2)
+        gpickle.dump(study, 'results/grid_search/study_ndgg1.gpkl')
+

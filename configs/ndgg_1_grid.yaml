@@ -1,9 +1,9 @@
 SEED: 7
-OPTIMIZER: 'Adam'
+OPTIMIZER: 'SGD'
 OPTIMIZER_CONFIG:
-  lr: 0.01
+  lr: 0.05
   # momentum: 0.1
-  weight_decay: 0
+  weight_decay: 0.00002
 
 LOSS_FUNCTION: 'CrossEntropyLoss'
 
@@ -20,12 +20,12 @@ MODEL_VER:
   anneal_dropouts: [[0.1, 0], [0.1, 0.5]]
 
 MODEL_CONFIG:
-  atom_embedding_dim: 75
+  atom_embedding_dim: 100
 
   config_ligand:
-    output_dim: 100
-    block_num: 5
-    hidden_dim: 256
+    output_dim: 50
+    block_num: 4
+    hidden_dim: 512
     aggregation_methods: ['sum', 'rnn-max']
     affine_before_merge: False
     multiple_aggregation_merge: 'cat'
@@ -35,8 +35,8 @@ MODEL_CONFIG:
     use_neighbor_op: False
     
   config_protein:
-    output_dim: 100
-    block_num: 5
+    output_dim: 55
+    block_num: 3
     hidden_dim: 256
     aggregation_methods: ['sum', 'rnn-max']
     affine_before_merge: False
@@ -54,5 +54,5 @@ TRAINING:
   batch_size: 256
   batch_size_min: 256
   batch_size_test: 256
-  max_epoch_num: 60
+  max_epoch_num: 100
   val_per_epoch_num: 1

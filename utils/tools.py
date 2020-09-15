@@ -1,7 +1,47 @@
 
+import yaml
 import numpy as np
 
-def split_trainval(data, args):
+def setup_cfg(config_file, logger=None):
+    # load yaml config
+    with open(config_file, 'r') as f:
+        cfg = yaml.safe_load(f)
+    # logger / print config
+    config_dumps = yaml.dump(cfg, indent=4)
+    if logger:
+        logger.info('=========================== CONFIGURATIONS ===========================')
+        for dump_line in config_dumps.split('\n'):
+            logger.info(dump_line)
+    else:
+        print(config_dumps)
+    # return config obj
+    return dict2obj(cfg)
+
+def dict2obj(d):
+
+    # checking whether object d is a
+    # instance of class list
+    if isinstance(d, list):
+           d = [dict2obj(x) for x in d]
+
+    # if d is not a instance of dict then
+    # directly object is returned
+    if not isinstance(d, dict):
+           return d
+
+    # declaring a class
+    class C:
+        pass
+
+    # constructor of the class passed to obj
+    obj = C()
+
+    for k in d:
+        obj.__dict__[k] = dict2obj(d[k])
+
+    return obj
+
+def split_trainval(data, args, shuffle=False):
     if type(data) is list:
         len_ = len(data[0])
         # make sure every element in the list contains some number of elements
@@ -24,7 +64,8 @@ def split_trainval(data, args):
         # K-Fold
         k = args.kfold
         idx = np.arange(len_)
-        np.random.shuffle(idx)
+        if shuffle:
+            np.random.shuffle(idx)
         for i in range(k):
             val_idx = np.zeros_like(idx, dtype=bool)
             val_idx[int(len_ * i / k):int(len_ * (i+1) / k)] = True

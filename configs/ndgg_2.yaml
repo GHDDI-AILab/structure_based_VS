@@ -3,14 +3,14 @@ OPTIMIZER: 'Adam'
 OPTIMIZER_CONFIG:
   # lr: 0.01
   # momentum: 0.1
-  weight_decay: 0.0001
+  # weight_decay: 0.0001
 
 LOSS_FUNCTION: 'CrossEntropyLoss'
 
 METRIC: 'metrics_1'
 
 MODEL_VER:
-  model_ver: 'model_ndgg_2'
+  model_ver: 'model_ndgg_1'
   batch_loader: 'load_batch_data_ndgg_1'
   load_data_prep: 'load_data_ndgg_1'
   ligand: 'model_4v4'
@@ -57,11 +57,8 @@ MODEL_CONFIG:
     slim: True
 
   config_cls:
-    h_sizes: [100, 75, 40]
+    h_sizes: [100, 75]
     output_dim: 2
-    act_layers: ['gelu', 'gelu', 'gelu']
-    norm_layers: ['bn', 'bn', 'bn']
-    dropouts: [0.5, 0.5, 0.5]
 
 TRAINING:
   batch_size: 256

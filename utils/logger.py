@@ -38,6 +38,7 @@ def init_logger(args):
     logger.addHandler(fh)
 
     # save all params into logs first
+    logger.info('=========================== ARGUMENTS ===========================')
     for k, v in vars(args).items():
         logger.info('%s: %s' %(k, str(v)))
 
