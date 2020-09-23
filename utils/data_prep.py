@@ -75,3 +75,30 @@ def load_data_ndsg_1(args, CFG):
     CFG.aa_dict_len = len(aa_dict)
     # data = (unique_id for loo, smiles, proteins_seqs, label)
     return atom_dict, (protein, smiles, protein_seqs, label)
+
+
+def load_data_ndsg_1_CL(args, CFG):
+    aa_dict = load_aadict(args.aa_dict_file)
+    atom_dict = load_atom_dict(args.atom_dict_file)
+
+    ligands = pd.read_csv(args.train_ligands)
+    smiles = ligands.smiles.values
+    # label = ligands.label.values
+    protein = ligands.protein.values
+
+    with open(args.train_protein_seq_dict, 'rb') as fp:
+        proteins_seq_dict = msgpack.unpackb(fp.read(), raw=False)
+
+    proteins_seq = {}
+    for k, v in proteins_seq_dict.items():
+        p_seq = np.array([2] + [aa_dict[s] for s in v] + [3])
+        proteins_seq[k] = np.concatenate(
+            [p_seq, [aa_dict['<PAD>']] * (CFG.MODEL_CONFIG.config_protein.seq_max_len - len(p_seq))])
+
+    protein_seqs = np.array([proteins_seq[p] for p in proteins_seq.keys()])
+    CFG.aa_dict_len = len(aa_dict)
+    # data = (unique_id for loo, smiles, proteins_seqs, label)
+    protein = np.array(list(proteins_seq.keys()))
+    smiles = np.array([smiles[0]] * len(protein)) # dummy
+    label = np.ones_like(protein, dtype=np.int)
+    return atom_dict, (protein, smiles, protein_seqs, label)

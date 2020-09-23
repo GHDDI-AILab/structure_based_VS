@@ -53,7 +53,7 @@ def get_parser():
     # argparser.add_argument('-train_ligands', default='./data/ligands_dude98pos_truev2all.csv', type=str)
     # argparser.add_argument('-train_ligands', default='./data/miniset_seed7.csv', type=str)
     #     # NonDockingSG
-    argparser.add_argument('-train_protein_seq_dict', default='./data/chain_list_pad.mp', type=str)
+    argparser.add_argument('-train_protein_seq_dict', default='./data/chain_list_pad_4462_pretrain.mp', type=str)
     # argparser.add_argument('-train_ligands', default='./data/ligands_dude98pos_truev2all.csv', type=str)
     argparser.add_argument('-train_ligands', default='./data/miniset_seed7.csv', type=str)
 

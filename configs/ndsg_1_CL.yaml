@@ -12,7 +12,7 @@ METRIC: 'metrics_1'
 MODEL_VER:
   model_ver: 'model_ndsg_2_CL'
   batch_loader: 'load_batch_data_ndsg_1_CL'
-  load_data_prep: 'load_data_ndsg_1'
+  load_data_prep: 'load_data_ndsg_1_CL'
   ligand: 'model_4v4'
   protein: 'model_seq_1_CL'
   cls: 'cls_1'
