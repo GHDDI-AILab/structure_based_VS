@@ -205,6 +205,75 @@ def load_batch_data_ndsg_1(data, batch_sample_idx, atom_dict, add_self_connectio
     batch_data = [(batch_data_ligand, batch_data_protein), Y]
     return batch_data
 
+
+def load_batch_data_ndsg_1_CL(data, batch_sample_idx, atom_dict, add_self_connection=False, degree_wise=False):
+    """
+    Corresponding to model_4v4, input is SMILES strings
+    :param strings: SMILES strings
+    :param batch_sample_idx:
+    :param atom_dict:
+    :param add_self_connection: whether append self-connection in adjacency matrix
+    :param degree_wise: whether in degree-wise format
+    :param aux_data_list: list of auxiliary data
+    :return: X, edges, membership, degree_slices (optional), *aux_data (optional)
+             X: (node_num,), index of each node according to `atom_dict`, int64
+             edges: (2, edge_num), int64, each column in format of (neighbor_node, center_node)
+             membership: (node_num,), int64, representing to which graph the i_th node belongs
+             degree_slices: (max_degree_in_batch+1, 2), each row in format of (start_idx, end_idx), in which '*_idx' corresponds
+                            to edges indices; i.e., each row is the span of edges whose center node is of the same degree,
+                            returned only when `degree_wise` = True
+             *aux_data: list of auxiliary data organized in one batch
+    """
+    protein, ligand_smiles, protein_seqs, labels = data
+
+    # ligand part
+    # batch_size = len(batch_sample_idx)
+    # tokenized_sequences = []
+    # edges = []
+    # start_idxs = [0]
+    # membership = []
+    # for i in range(batch_size):
+    #     s = ligand_smiles[batch_sample_idx[i]]
+    #     molecule = Chem.MolFromSmiles(s)
+    #     molecule = canonicalize_molecule(molecule)
+    #     tokenized_seq = []
+    #     for atom in molecule.GetAtoms():
+    #         if atom.GetSymbol() not in atom_dict:
+    #             tokenized_seq.append(atom_dict['UNK'])  # OOV
+    #         else:
+    #             tokenized_seq.append(atom_dict[atom.GetSymbol()])
+    #     tokenized_sequences.extend(tokenized_seq)
+    #     n = len(tokenized_seq)
+    #     membership.extend([i for _ in range(n)])
+    #     start_idxs.append(n + start_idxs[i])
+    #     edge_list = [(b.GetBeginAtomIdx() + start_idxs[i], b.GetEndAtomIdx() + start_idxs[i]) for b in
+    #                  molecule.GetBonds()]
+    #     edge_list_reverse = [(j, i) for (i, j) in edge_list]
+    #     edges.append(edge_list)
+    #     edges.append(edge_list_reverse)  # add symmetric edge
+    #     if add_self_connection:
+    #         edges.append([(j + start_idxs[i], j + start_idxs[i]) for j in range(n)])
+    #
+    # X = np.array(tokenized_sequences, dtype=np.int64)  # (node_num,), index of each node, int64
+    # edges = np.concatenate(edges, axis=0).transpose().astype(
+    #     np.int64)  # (2, n_pair), each column denotes an edge, from node i to node j, int64
+    # membership = np.array(membership, dtype=np.int64)  # (node_num,)
+    #
+    # batch_data_ligand = [X, edges, membership]
+    # if degree_wise:
+    #     X, edges, membership, degree_slices = convert_to_degree_wise_format(X, edges, membership)
+    #     batch_data_ligand.append(degree_slices)
+
+    # protein part
+    protein_seqs_batch = protein_seqs[batch_sample_idx]
+
+    batch_data_protein = [protein_seqs_batch]
+
+    # combine
+    Y = labels[batch_sample_idx]
+    batch_data = [(None, batch_data_protein), Y]
+    return batch_data
+
 def feed_sample_batch(batch_data_loader,
                       data,
                       data_queue=None,

@@ -5,16 +5,16 @@ OPTIMIZER_CONFIG:
   # momentum: 0.1
   weight_decay: 0.0001
 
-LOSS_FUNCTION: 'CrossEntropyLoss'
+LOSS_FUNCTION: 'BCELoss'
 
 METRIC: 'metrics_1'
 
 MODEL_VER:
-  model_ver: 'model_ndsg_2'
-  batch_loader: 'load_batch_data_ndsg_1'
+  model_ver: 'model_ndsg_2_CL'
+  batch_loader: 'load_batch_data_ndsg_1_CL'
   load_data_prep: 'load_data_ndsg_1'
   ligand: 'model_4v4'
-  protein: 'model_seq_1'
+  protein: 'model_seq_1_CL'
   cls: 'cls_1'
   output_dim: 2
   anneal_dropouts: [[0.1, 0], [0.1, 0.5]]
@@ -50,8 +50,8 @@ MODEL_CONFIG:
     output_dim: 2
 
 TRAINING:
-  batch_size: 256
-  batch_size_min: 256
-  batch_size_test: 256
-  max_epoch_num: 100
+  batch_size: 4
+  batch_size_min: 4
+  batch_size_test: 4
+  max_epoch_num: 150
   val_per_epoch_num: 1

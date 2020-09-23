@@ -42,15 +42,12 @@ MODEL_CONFIG:
     
   config_protein:
     seq_max_len: 155
-    bert_config: '/home/jwu/projects/SBVS_dev/models/bert_model/bert_config.json'
-    pretrain: '/home/jwu/projects/SBVS_dev/models/bert_model/pretrain_ver1.pth'
+    bert_config: 'models/bert_model/bert_config.json'
+    pretrain: 'models/bert_model/pretrain_ver1.pth'
 
   config_cls:
-    h_sizes: [100, 75, 40]
+    h_sizes: [100, 75]
     output_dim: 2
-    act_layers: ['gelu', 'gelu', 'gelu']
-    norm_layers: ['bn', 'bn', 'bn']
-    dropouts: [0.5, 0.5, 0.5]
 
 TRAINING:
   batch_size: 256

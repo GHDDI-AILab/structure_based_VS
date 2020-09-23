@@ -174,3 +174,53 @@ class model_ndsg_2(nn.Module):
         x = self.classifier(x)
         
         return x
+
+
+class model_ndsg_2_CL(nn.Module):
+    """
+    NonDockingGG ver2: BERT(embed only) + 4v4 + cat_MLP
+    """
+
+    def __init__(self,
+                 CFG,
+                 num_embedding,
+                 ):
+        super(model_ndsg_2_CL, self).__init__()
+        # model_ligand = getattr(model_graph, CFG.MODEL_VER.ligand)
+        model_protein = getattr(model_sequence, CFG.MODEL_VER.protein)
+        # model_cls = getattr(model_classifier, CFG.MODEL_VER.cls)
+
+        # self.emb0 = nn.Embedding(num_embeddings=num_embedding,
+        #                          embedding_dim=CFG['MODEL_CONFIG']['atom_embedding_dim'])
+        # self.model_ligand = model_ligand(num_embedding=num_embedding,
+        #                                  **CFG.MODEL_CONFIG.config_ligand.__dict__)
+        bert_config = model_sequence.BertConfig(CFG.MODEL_CONFIG.config_protein.bert_config)
+        self.model_protein = model_protein(bert_config)
+        # sequence-pretrain
+        # if CFG.MODEL_CONFIG.config_protein.pretrain is not None:
+        #     pretrained_file = CFG.MODEL_CONFIG.config_protein.pretrain
+        #     state_dict = torch.load(pretrained_file, map_location=torch.device('cpu'))
+        #     # rename simple because trained in different module name
+        #     state_dict = rename_state_dict_keys(state_dict)
+        #     self.model_protein.load_state_dict(state_dict)
+
+        # classifier
+        # out_dim_ligand = CFG.MODEL_CONFIG.config_ligand.output_dim
+        # out_dim_protein = bert_config.hidden_size
+        # input_dim_cls = out_dim_ligand + out_dim_protein
+        # self.classifier = model_cls(input_dim=input_dim_cls,
+        #                             **CFG.MODEL_CONFIG.config_cls.__dict__)
+
+    def forward(self, data, dropout=0.0, degree_slices=None, aux=None):
+        data_ligand, data_protein = data
+        # X_ligand, edges_ligand, membership_ligand = data_ligand
+        protein_seqs = data_protein[0]
+        # get ligand and graph representation
+        # output_ligand = self.model_ligand(X_ligand,
+        #                                   edges=edges_ligand,
+        #                                   membership=membership_ligand,
+        #                                   dropout=dropout,
+        #                                   degree_slices=degree_slices)
+        CL_score, CL_y = self.model_protein(protein_seqs)
+
+        return CL_score, CL_y

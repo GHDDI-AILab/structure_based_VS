@@ -50,10 +50,12 @@ class Model_Agent():
         
         elif self.model_ver.startswith('model_ndsg'):
             data_ligand, data_protein, *aux = batch_data
-            for i in range(len(data_ligand)):
-                data_ligand[i] = torch.from_numpy(data_ligand[i]).to(self.device)
-            for i in range(len(data_protein)):
-                data_protein[i] = torch.from_numpy(data_protein[i]).to(self.device)
+            if data_ligand is not None:
+                for i in range(len(data_ligand)):
+                    data_ligand[i] = torch.from_numpy(data_ligand[i]).to(self.device)
+            if data_protein is not None:
+                for i in range(len(data_protein)):
+                    data_protein[i] = torch.from_numpy(data_protein[i]).to(self.device)
             scorematrix = self.model((data_ligand, data_protein),
                                     dropout=dropout, *aux)
 
